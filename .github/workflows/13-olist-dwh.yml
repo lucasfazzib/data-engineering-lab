@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths: ["13-olist-data-warehouse/**", ".github/workflows/13-olist-dwh.yml"]
+  workflow_dispatch:
   pull_request:
     paths: ["13-olist-data-warehouse/**", ".github/workflows/13-olist-dwh.yml"]
 

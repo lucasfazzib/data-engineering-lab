@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths: ["01-dbt-duckdb/**", ".github/workflows/01-dbt-duckdb.yml"]
+  workflow_dispatch:
   pull_request:
     paths: ["01-dbt-duckdb/**", ".github/workflows/01-dbt-duckdb.yml"]
 
