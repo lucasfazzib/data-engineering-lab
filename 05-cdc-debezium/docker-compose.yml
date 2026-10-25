@@ -1,0 +1,93 @@
+name: lab05-cdc
+
+services:
+  postgres:
+    image: postgres:18.6
+    container_name: lab05-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres # local-only credentials
+      POSTGRES_DB: shop
+    command: ["postgres", "-c", "wal_level=logical", "-c", "max_replication_slots=4", "-c", "max_wal_senders=4"]
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d shop"]
+      interval: 2s
+      retries: 60
+    mem_limit: 384m
+
+  kafka:
+    image: apache/kafka:4.3.1
+    container_name: lab05-kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: INTERNAL://:9092,CONTROLLER://:9093,EXTERNAL://:29092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_HEAP_OPTS: -Xms384m -Xmx384m
+    ports:
+      - "29092:29092"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 3s
+      timeout: 10s
+      retries: 40
+    mem_limit: 768m
+
+  connect:
+    image: quay.io/debezium/connect:3.6.2.Final
+    container_name: lab05-connect
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: connect-cluster
+      # Kafka Connect keeps its own state in Kafka topics
+      CONFIG_STORAGE_TOPIC: connect_configs
+      OFFSET_STORAGE_TOPIC: connect_offsets
+      STATUS_STORAGE_TOPIC: connect_statuses
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      HEAP_OPTS: -Xms256m -Xmx640m
+    ports:
+      - "8083:8083" # Kafka Connect REST API
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8083/ > /dev/null"]
+      interval: 3s
+      retries: 60
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    mem_limit: 1g
+
+  app:
+    build: .
+    image: data-engineering-lab/05-cdc:local
+    container_name: lab05-app
+    user: "${LAB_UID:-1000}:${LAB_GID:-1000}"
+    working_dir: /lab/app
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      CONNECT_URL: http://connect:8083
+      PG_DSN: postgresql://postgres:postgres@postgres:5432/shop
+      PYTHONUNBUFFERED: "1"
+      HOME: /tmp
+    volumes:
+      - .:/lab
+    command: sleep infinity
+    depends_on:
+      connect:
+        condition: service_healthy
+    mem_limit: 256m

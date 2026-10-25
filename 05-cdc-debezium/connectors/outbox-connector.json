@@ -1,0 +1,32 @@
+{
+  "name": "outbox-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "tasks.max": "1",
+
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "debezium",
+    "database.password": "debezium",
+    "database.dbname": "shop",
+
+    "topic.prefix": "shopoutbox",
+    "table.include.list": "public.outbox",
+
+    "plugin.name": "pgoutput",
+    "slot.name": "debezium_outbox",
+    "publication.name": "dbz_shop",
+    "publication.autocreate.mode": "disabled",
+    "snapshot.mode": "no_data",
+    "tombstones.on.delete": "false",
+
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+
+    "topic.creation.default.replication.factor": "1",
+    "topic.creation.default.partitions": "3",
+
+    "_comment_TODO_exercise_3": "Add the Outbox Event Router SMT here: transforms=outbox, transforms.outbox.type=io.debezium.transforms.outbox.EventRouter, and configure route.by.field / table.field.event.key / table.expand.json.payload so each row becomes a clean event on topic outbox.event.<aggregatetype>"
+  }
+}
