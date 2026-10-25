@@ -1,0 +1,42 @@
+name: lab02-postgres
+
+services:
+  postgres:
+    image: postgres:18.6
+    container_name: lab02-postgres
+    environment:
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: lab # local-only credentials
+      POSTGRES_DB: lab
+    command:
+      - postgres
+      - -c
+      - wal_level=logical # needed for logical replication slots (and for Debezium in 05)
+      - -c
+      - max_replication_slots=4
+      - -c
+      - max_wal_senders=4
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - track_io_timing=on
+      - -c
+      - shared_buffers=256MB
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql # Postgres 18+ images expect the mount here, not .../data
+      - ./init:/docker-entrypoint-initdb.d:ro
+      - ./lessons:/lessons:ro
+      - ./exercises:/exercises:ro
+    healthcheck:
+      # -h 127.0.0.1: during first-start init the temporary server only listens on the unix socket,
+      # so a TCP check only passes once the init scripts are done and the real server is up.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U lab -d lab"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+    mem_limit: 1g
+
+volumes:
+  pgdata:
