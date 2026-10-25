@@ -1,0 +1,41 @@
+name: lab03-dlt
+
+x-common: &common
+  build: .
+  image: data-engineering-lab/03-dlt:local
+  user: "${LAB_UID:-1000}:${LAB_GID:-1000}"
+  volumes:
+    - .:/lab
+  environment: &env
+    HOME: /tmp
+    # Dummy token for the local mock API. Real secrets go in a git-ignored .env / .dlt/secrets.toml.
+    API_TOKEN: dummy-local-token
+    SOURCES__HELPDESK__API_TOKEN: dummy-local-token
+    API_URL: http://api:8000/api/v1/
+    DUCKDB_PATH: /lab/warehouse/helpdesk.duckdb
+    DLT_PIPELINES_DIR: /lab/.dlt/pipelines
+    RUNTIME__LOG_LEVEL: WARNING
+
+services:
+  api:
+    <<: *common
+    container_name: lab03-api
+    working_dir: /lab/api
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --log-level warning
+    ports:
+      - "8000:8000" # http://localhost:8000/docs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 2s
+      retries: 30
+    mem_limit: 256m
+
+  pipeline:
+    <<: *common
+    container_name: lab03-pipeline
+    working_dir: /lab/pipeline
+    command: sleep infinity
+    depends_on:
+      api:
+        condition: service_healthy
+    mem_limit: 768m

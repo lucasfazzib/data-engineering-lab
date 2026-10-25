@@ -23,9 +23,9 @@ data/
 !**/seeds/
 *.parquet
 
-# dlt
-.dlt/secrets.toml
-.dlt/pipelines/
+# dlt (patterns with a slash are anchored to the repo root, hence **/)
+**/.dlt/secrets.toml
+**/.dlt/pipelines/
 
 # Spark / Delta / streaming
 checkpoints/
