@@ -23,7 +23,7 @@ services:
       - -c
       - shared_buffers=256MB
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql # Postgres 18+ images expect the mount here, not .../data
       - ./init:/docker-entrypoint-initdb.d:ro

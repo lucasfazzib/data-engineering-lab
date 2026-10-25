@@ -16,6 +16,6 @@ services:
     volumes:
       - .:/lab
     ports:
-      - "8080:8080" # dbt docs serve
+      - "127.0.0.1:8080:8080" # dbt docs serve
     command: sleep infinity
     mem_limit: 1g

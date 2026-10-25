@@ -16,7 +16,7 @@ services:
     volumes:
       - .:/lab
     ports:
-      - "8080:8080" # dbt docs
-      - "8501:8501" # Streamlit dashboard
+      - "127.0.0.1:8080:8080" # dbt docs
+      - "127.0.0.1:8501:8501" # Streamlit dashboard
     command: sleep infinity
     mem_limit: 2g

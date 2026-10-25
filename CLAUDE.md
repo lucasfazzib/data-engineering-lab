@@ -12,6 +12,7 @@ Context for resuming work on this repo in a new session.
 - Never commit personal information: names, personal emails, tokens, API keys, account ids, machine details.
 - Git identity for this repo is the GitHub handle + noreply address (repo-local `git config`). Keep it that way.
 - Credentials in compose files are local-only dummies. Real secrets only in git-ignored files.
+- Published ports bind to loopback only (`"127.0.0.1:5432:5432"`), so dummy credentials are never reachable from the network.
 - Datasets are downloaded at run time, never committed (`data/`, `*.duckdb`, manifests are git-ignored).
 - `secret-scan` workflow (gitleaks) runs on every push.
 
