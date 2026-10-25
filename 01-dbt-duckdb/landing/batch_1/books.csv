@@ -1,0 +1,11 @@
+book_id,title,author,category,price_cents
+1,The Lakehouse Handbook,R. Almeida,data,8990
+2,Streams and Tables,M. Kowalski,data,7490
+3,SQL Patterns in Practice,J. Okafor,data,5990
+4,A Quiet Harbor,L. Duarte,fiction,4290
+5,Night Trains,S. Ivanova,fiction,3990
+6,The Salt Road,P. Moreau,fiction,4590
+7,Cooking for Engineers,T. Nakamura,cooking,6290
+8,Bread at Home,C. Ferreira,cooking,3490
+9,Mountains of the South,A. Vidal,travel,5490
+10,"Small Habits, Big Data",K. Lindqvist,data,4990

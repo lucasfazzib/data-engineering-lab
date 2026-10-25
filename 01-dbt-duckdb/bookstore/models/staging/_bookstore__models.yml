@@ -1,0 +1,29 @@
+models:
+  - name: stg_bookstore__customers
+    description: One row per customer (current state from the latest full extract).
+    columns:
+      - name: customer_id
+        description: Primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: email
+        description: Lowercased and trimmed.
+      - name: country_code
+        description: ISO-2, uppercased.
+
+  - name: stg_bookstore__orders
+    description: One row per order — latest version by updated_at.
+    columns:
+      - name: order_id
+        description: Primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["placed", "shipped", "delivered", "cancelled", "returned"]
+
+  # TODO (exercise 1/3): document and test stg_bookstore__books and stg_bookstore__order_items here.

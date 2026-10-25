@@ -43,7 +43,7 @@ Context for resuming work on this repo in a new session.
 ## Status
 | # | Example | Status |
 |---|---------|--------|
-| 01 | dbt + DuckDB | todo |
+| 01 | dbt + DuckDB | in progress — infra + skeleton done and verified (2026-10-25); Lucas doing exercises 1–8, then review |
 | 02 | Postgres for data engineers | todo |
 | 03 | dlt incremental ingestion | todo |
 | 04 | Kafka basics | todo |
@@ -56,5 +56,9 @@ Context for resuming work on this repo in a new session.
 | 11 | Capstone end-to-end | todo |
 | 12 | Iceberg + Trino (optional) | todo |
 
-Next step: wait for Lucas to ask for example 01.
+Status values: todo → in progress (skeleton delivered, exercises pending) → done (exercises reviewed).
+
+Next step: Lucas works on 01 exercises; when he asks, review his code as a demanding reviewer.
+Exercise reference solutions were validated in a throwaway copy (not committed) — snapshot on VARCHAR source,
+incremental merge, late order 36 and the customer-5 timestamp-strategy trap all behave as the README describes.
 Backlog (repo polish): GitHub Actions CI (dbt build on DuckDB, ruff, sqlfluff), pre-commit, badges.

@@ -1,0 +1,21 @@
+# EXERCISE 5 — snapshot (SCD type 2) of the customers source.
+#
+# Snapshots record how a mutable table changes over time: every time a row changes, dbt closes the
+# old version (dbt_valid_to) and inserts the new one. It's the SCD2 MERGE you would hand-write on Delta.
+#
+# TODO:
+#   1. uncomment the block below and pick a strategy: `timestamp` (needs updated_at) or `check` (needs check_cols)
+#   2. make run          -> then `make snapshot` (first version of every customer)
+#   3. make load-batch2  -> then `make snapshot` again
+#   4. query the snapshot and find what happened to customer_id 5. Explain it in NOTES.md.
+#
+# snapshots:
+#   - name: customers_snapshot
+#     relation: source('bookstore', 'customers')
+#     config:
+#       schema: snapshots
+#       unique_key: customer_id
+#       strategy: ...
+#       # updated_at: ...       (timestamp strategy)
+#       # check_cols: [...]     (check strategy)
+#       hard_deletes: ...       # ignore | invalidate | new_record — what does each one do?

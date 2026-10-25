@@ -1,0 +1,13 @@
+seeds:
+  - name: country_codes
+    description: Static lookup of ISO country codes. Small, versioned with the code — the right use case for a seed.
+    config:
+      column_types:
+        country_code: varchar
+        country_name: varchar
+        region: varchar
+    columns:
+      - name: country_code
+        data_tests:
+          - unique
+          - not_null

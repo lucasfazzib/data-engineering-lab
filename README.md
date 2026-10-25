@@ -8,7 +8,7 @@ Built as a study notebook by a data engineer coming from Databricks/Spark: every
 
 | # | Example | Key concepts | Weight | Status |
 |---|---------|--------------|--------|--------|
-| 01 | [dbt + DuckDB](01-dbt-duckdb/) | sources, staging/marts, materializations, tests, docs, snapshots (SCD2) | 🟢 light | todo |
+| 01 | [dbt + DuckDB](01-dbt-duckdb/) | sources, staging/marts, materializations, tests, docs, snapshots (SCD2) | 🟢 light | in progress |
 | 02 | [Postgres for data engineers](02-postgres-for-de/) | indexes, EXPLAIN ANALYZE, WAL, replication slots, partitioning | 🟢 light | todo |
 | 03 | [Incremental API ingestion with dlt](03-dlt-incremental/) | incremental cursors, state, schema evolution, write dispositions | 🟢 light | todo |
 | 04 | [Kafka fundamentals](04-kafka-basics/) | KRaft, topics, partitions, consumer groups, offsets, idempotent producer | 🟡 medium | todo |

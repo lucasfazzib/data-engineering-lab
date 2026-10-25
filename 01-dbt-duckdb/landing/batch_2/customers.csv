@@ -1,0 +1,16 @@
+customer_id,first_name,last_name,email,country_code,tier,created_at,updated_at
+1,Ana,Souza,ana.souza@example.com,BR,basic,2026-08-02 09:00:00,2026-08-02 09:00:00
+2,Bruno,Lima,bruno.lima@example.com,BR,basic,2026-08-03 09:00:00,2026-08-03 09:00:00
+3,Carla,Mendes,carla.mendes@example.com,PT,premium,2026-08-04 09:00:00,2026-09-25 10:00:00
+4,Diego,Fernandez,  DIEGO.FERNANDEZ@Example.com ,AR,plus,2026-08-05 09:00:00,2026-08-05 09:00:00
+5,Emma,Schmidt,emma.schmidt@example.com,DE,plus,2026-08-06 09:00:00,2026-08-06 09:00:00
+6,Felipe,Rocha,felipe.rocha@example.com,BR,premium,2026-08-07 09:00:00,2026-08-07 09:00:00
+7,Grace,Miller,grace.miller@example.com,BR,plus,2026-08-08 09:00:00,2026-09-25 11:00:00
+8,Hugo,Costa,hugo.costa@example.com,PT,basic,2026-08-09 09:00:00,2026-08-09 09:00:00
+9,Isabela,Alves,isabela.alves@example.com,br,basic,2026-08-10 09:00:00,2026-08-10 09:00:00
+10,John,Carter,john.carter@newmail.com,US,plus,2026-08-11 09:00:00,2026-09-25 12:00:00
+11,Karina,Torres,karina.torres@example.com,AR,basic,2026-08-12 09:00:00,2026-08-12 09:00:00
+12,Lucas,Martins,lucas.martins@example.com,BR,basic,2026-08-13 09:00:00,2026-08-13 09:00:00
+13,Marina,Ribeiro,marina.ribeiro@example.com,BR,basic,2026-09-26 10:00:00,2026-09-26 10:00:00
+14,Nico,Weber,nico.weber@example.com,DE,plus,2026-09-27 10:00:00,2026-09-27 10:00:00
+15,Olivia,Brown,olivia.brown@example.com,US,basic,2026-09-28 10:00:00,2026-09-28 10:00:00

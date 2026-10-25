@@ -1,0 +1,21 @@
+name: lab01-dbt-duckdb
+
+services:
+  dbt:
+    build: .
+    image: data-engineering-lab/01-dbt-duckdb:local
+    container_name: lab01-dbt
+    # Run as the host user so files written to the bind mount (target/, *.duckdb) are not owned by root.
+    user: "${LAB_UID:-1000}:${LAB_GID:-1000}"
+    working_dir: /lab/bookstore
+    environment:
+      HOME: /tmp
+      DBT_PROFILES_DIR: /lab/bookstore
+      DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+      DUCKDB_PATH: /lab/warehouse/bookstore.duckdb
+    volumes:
+      - .:/lab
+    ports:
+      - "8080:8080" # dbt docs serve
+    command: sleep infinity
+    mem_limit: 1g

@@ -1,0 +1,9 @@
+# Normally lives in ~/.dbt/profiles.yml (it holds credentials). Kept in the project here
+# because DuckDB is a local file with no secrets. DBT_PROFILES_DIR points dbt to this folder.
+bookstore:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', '../warehouse/bookstore.duckdb') }}"
+      threads: 4

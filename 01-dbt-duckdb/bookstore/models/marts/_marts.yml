@@ -1,0 +1,18 @@
+models:
+  - name: dim_customers
+    description: Current state of each customer enriched with country and region (SCD type 1).
+    columns:
+      - name: customer_id
+        description: Primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: country_name
+        description: Null when the customer's country_code is missing from the country_codes seed.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+
+  # TODO (exercise 2/3): document and test fct_orders here (PK tests + relationships to dim_customers).
+  # TODO (exercise 7): add an exposure (e.g. a "Sales dashboard") that depends on fct_orders and dim_customers.
