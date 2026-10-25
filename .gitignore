@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Env / secrets
+.env
+!.env.example
+
+# dbt
+target/
+dbt_packages/
+logs/
+.user.yml
+
+# DuckDB / local data
+*.duckdb
+*.duckdb.wal
+data/
+!**/seeds/
+*.parquet
+
+# dlt
+.dlt/secrets.toml
+.dlt/pipelines/
+
+# Spark / Delta / streaming
+checkpoints/
+spark-warehouse/
+metastore_db/
+derby.log
+
+# Airflow
+airflow.db
+airflow-webserver.pid
+
+# Docker volumes mounted locally
+volumes/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
