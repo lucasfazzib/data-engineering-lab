@@ -1,0 +1,22 @@
+name: lab13-olist-dwh
+
+services:
+  dwh:
+    build: .
+    image: data-engineering-lab/13-olist-dwh:local
+    container_name: lab13-dwh
+    user: "${LAB_UID:-1000}:${LAB_GID:-1000}"
+    working_dir: /lab
+    environment:
+      HOME: /tmp
+      DUCKDB_PATH: /lab/warehouse/olist.duckdb
+      DBT_PROFILES_DIR: /lab/olist_dbt
+      DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+      KAGGLEHUB_CACHE: /lab/data/kaggle # downloaded files stay on the host (git-ignored)
+    volumes:
+      - .:/lab
+    ports:
+      - "8080:8080" # dbt docs
+      - "8501:8501" # Streamlit dashboard
+    command: sleep infinity
+    mem_limit: 2g

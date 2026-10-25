@@ -1,0 +1,41 @@
+name: olist
+version: "1.0.0"
+profile: olist
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+analysis-paths: ["analyses"]
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  # Order statuses that represent a sale (used by revenue metrics)
+  sale_statuses: ["delivered", "shipped", "invoiced", "processing", "approved", "created"]
+  # The dataset starts sparse (2016) and stops mid-collection (Sep/Oct 2018): compare months inside this window
+  analysis_start_month: "2017-01-01"
+  analysis_end_month: "2018-08-01"
+
+models:
+  olist:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+    marts:
+      +materialized: table
+      core:
+        +schema: core
+      analytics:
+        +schema: analytics
+
+seeds:
+  olist:
+    +schema: reference
+
+data_tests:
+  olist:
+    +store_failures: true  # failing rows are kept in the `dbt_test__audit` schema for debugging
+    +schema: audit

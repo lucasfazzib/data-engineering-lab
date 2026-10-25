@@ -1,0 +1,55 @@
+name: 13-olist-dwh
+
+on:
+  push:
+    branches: [main]
+    paths: ["13-olist-data-warehouse/**", ".github/workflows/13-olist-dwh.yml"]
+  pull_request:
+    paths: ["13-olist-data-warehouse/**", ".github/workflows/13-olist-dwh.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 13-olist-data-warehouse
+    env:
+      DUCKDB_PATH: ${{ github.workspace }}/ci.duckdb
+      DBT_PROFILES_DIR: ${{ github.workspace }}/13-olist-data-warehouse/olist_dbt
+      DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: 13-olist-data-warehouse/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Python lint and format
+        run: |
+          ruff check ingestion dashboard
+          ruff format --check ingestion dashboard
+
+      - name: Create empty raw tables (no data, no secrets needed)
+        run: python ingestion/extract_load.py --empty
+
+      - name: dbt build --empty (compiles everything, enforces contracts, runs unit tests)
+        working-directory: 13-olist-data-warehouse/olist_dbt
+        run: |
+          dbt deps
+          dbt build --empty
+
+      - name: SQL lint
+        working-directory: 13-olist-data-warehouse/olist_dbt
+        run: sqlfluff lint models tests analyses

@@ -1,0 +1,37 @@
+name: 01-dbt-duckdb
+
+on:
+  push:
+    branches: [main]
+    paths: ["01-dbt-duckdb/**", ".github/workflows/01-dbt-duckdb.yml"]
+  pull_request:
+    paths: ["01-dbt-duckdb/**", ".github/workflows/01-dbt-duckdb.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 01-dbt-duckdb
+    env:
+      DUCKDB_PATH: ${{ github.workspace }}/ci.duckdb
+      DBT_PROFILES_DIR: ${{ github.workspace }}/01-dbt-duckdb/bookstore
+      DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: 01-dbt-duckdb/requirements.txt
+
+      - run: pip install -r requirements.txt
+
+      - name: Load batch_1 and build
+        run: |
+          python scripts/load_landing.py batch_1 --reset
+          cd bookstore && dbt build

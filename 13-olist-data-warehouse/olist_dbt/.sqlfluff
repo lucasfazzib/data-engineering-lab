@@ -1,0 +1,29 @@
+[sqlfluff]
+dialect = duckdb
+templater = dbt
+max_line_length = 140
+# layout.spacing/long_lines: we align aliases for readability.
+# references.keywords: dimensional models conventionally use year / month / quarter as column names.
+exclude_rules = layout.spacing, layout.long_lines, structure.column_order, layout.cte_newline, references.keywords
+
+[sqlfluff:templater:dbt]
+project_dir = .
+profiles_dir = .
+
+[sqlfluff:rules:capitalisation.keywords]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.functions]
+extended_capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.identifiers]
+extended_capitalisation_policy = lower
+
+[sqlfluff:rules:aliasing.table]
+aliasing = explicit
+
+[sqlfluff:rules:aliasing.column]
+aliasing = explicit
+
+[sqlfluff:rules:ambiguous.column_references]
+group_by_and_order_by_style = consistent

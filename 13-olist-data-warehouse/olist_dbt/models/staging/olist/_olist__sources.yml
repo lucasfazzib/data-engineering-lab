@@ -1,0 +1,33 @@
+sources:
+  - name: olist
+    description: >
+      Brazilian E-Commerce Public Dataset by Olist (Kaggle, CC BY-NC-SA 4.0), version 2.
+      Loaded untouched by ingestion/extract_load.py — every column is VARCHAR.
+    schema: raw
+    tables:
+      - name: orders
+        description: One row per order, with its lifecycle timestamps.
+        columns:
+          - name: order_id
+            data_tests: [unique, not_null]
+      - name: customers
+        description: >
+          One row per (customer, order). `customer_id` is generated per order;
+          `customer_unique_id` identifies the actual person.
+        columns:
+          - name: customer_id
+            data_tests: [unique, not_null]
+      - name: order_items
+        description: One row per item in an order (`order_item_id` is the line number inside the order).
+      - name: order_payments
+        description: One row per payment method used in an order (an order can be split across payments).
+      - name: order_reviews
+        description: Customer satisfaction survey. Contains duplicated review_ids and orders with several reviews.
+      - name: products
+        description: Product catalog. Column names keep the original typos (`lenght`).
+      - name: sellers
+        description: Sellers registered in the marketplace.
+      - name: geolocation
+        description: Many coordinates per zip code prefix (~1M rows for ~19k prefixes), including some outside Brazil.
+      - name: product_category_name_translation
+        description: Portuguese → English category names. Two categories are missing.

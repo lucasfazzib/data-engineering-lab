@@ -1,0 +1,58 @@
+models:
+  - name: mart_monthly_sales
+    description: Monthly GMV, orders, customers, AOV, freight share, review score and late-delivery rate.
+    columns:
+      - name: month
+        data_tests: [unique, not_null]
+      - name: in_analysis_window
+        description: >
+          False for the sparse first/last months of the dataset (configured by the
+          `analysis_start_month` / `analysis_end_month` vars). Filter on it before comparing months.
+
+  - name: mart_seller_scorecard
+    description: Seller performance with GMV rank and Pareto segment.
+    columns:
+      - name: seller_key
+        data_tests: [unique, not_null]
+      - name: pareto_segment
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["head (80% of GMV)", "long tail"]
+
+  - name: mart_delivery_performance
+    description: Delivery speed, lateness and its effect on review scores, by destination state.
+    columns:
+      - name: state_code
+        data_tests: [unique, not_null]
+
+  - name: mart_customer_cohorts
+    description: Monthly acquisition cohorts and repeat-purchase retention.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [cohort_month, months_since_first_order]
+    columns:
+      - name: retention_rate
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+
+exposures:
+  - name: olist_dashboard
+    label: Olist sales & operations dashboard
+    type: dashboard
+    maturity: medium
+    url: http://localhost:8501
+    description: Streamlit dashboard (dashboard/app.py) with sales, delivery and cohort views.
+    depends_on:
+      - ref('mart_monthly_sales')
+      - ref('mart_delivery_performance')
+      - ref('mart_customer_cohorts')
+      - ref('mart_seller_scorecard')
+      - ref('fct_order_items')
+      - ref('dim_products')
+    owner:
+      name: Data Engineering

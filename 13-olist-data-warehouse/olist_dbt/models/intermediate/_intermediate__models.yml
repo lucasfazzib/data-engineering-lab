@@ -1,0 +1,51 @@
+models:
+  - name: int_geolocation__zip_centroids
+    description: One coordinate per zip code prefix (median of the points inside Brazil's bounding box).
+    columns:
+      - name: zip_code_prefix
+        data_tests: [unique, not_null]
+
+  - name: int_order_reviews__latest
+    description: One review per order — the most recently answered.
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+
+  - name: int_order_payments__by_order
+    description: Payments aggregated to order grain.
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+
+  - name: int_order_items__by_order
+    description: Order lines aggregated to order grain.
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+
+unit_tests:
+  - name: test_latest_review_wins_per_order
+    description: With several reviews for one order, keep the most recently answered; other orders are untouched.
+    model: int_order_reviews__latest
+    given:
+      - input: ref('stg_olist__order_reviews')
+        rows:
+          - {review_id: r1, order_id: o1, review_score: 1, answered_at: "2018-01-01 10:00:00", created_at: "2018-01-01 00:00:00"}
+          - {review_id: r2, order_id: o1, review_score: 5, answered_at: "2018-01-03 10:00:00", created_at: "2018-01-02 00:00:00"}
+          - {review_id: r3, order_id: o2, review_score: 3, answered_at: "2018-01-02 10:00:00", created_at: "2018-01-02 00:00:00"}
+    expect:
+      rows:
+        - {order_id: o1, review_id: r2, review_score: 5}
+        - {order_id: o2, review_id: r3, review_score: 3}
+
+  - name: test_primary_payment_type_is_largest_share
+    description: Split payments roll up to one row; the primary type is the one with the largest value.
+    model: int_order_payments__by_order
+    given:
+      - input: ref('stg_olist__order_payments')
+        rows:
+          - {order_id: o1, payment_sequential: 1, payment_type: voucher, installments: 1, payment_value: 20.00}
+          - {order_id: o1, payment_sequential: 2, payment_type: credit_card, installments: 6, payment_value: 80.00}
+    expect:
+      rows:
+        - {order_id: o1, payment_count: 2, payment_value: 100.00, max_installments: 6, primary_payment_type: credit_card, used_voucher: true}

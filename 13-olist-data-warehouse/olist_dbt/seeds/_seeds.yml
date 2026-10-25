@@ -1,0 +1,16 @@
+seeds:
+  - name: br_states
+    description: Brazilian states (UF) with their IBGE macro-region. Static reference data versioned with the code.
+    config:
+      column_types:
+        state_code: varchar
+        state_name: varchar
+        region: varchar
+    columns:
+      - name: state_code
+        data_tests: [unique, not_null]
+      - name: region
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul"]

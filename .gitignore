@@ -19,6 +19,7 @@ logs/
 # DuckDB / local data
 *.duckdb
 *.duckdb.wal
+ingestion_manifest.json
 data/
 !**/seeds/
 *.parquet

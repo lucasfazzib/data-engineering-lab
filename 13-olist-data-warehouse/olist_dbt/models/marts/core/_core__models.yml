@@ -1,0 +1,180 @@
+models:
+  - name: dim_date
+    description: Calendar dimension, one row per day (2016-01-01 → 2018-12-31).
+    columns:
+      - name: date_key
+        description: YYYYMMDD integer key.
+        data_tests: [unique, not_null]
+
+  - name: dim_customers
+    description: One row per real customer (`customer_unique_id`), with the address of their latest order.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: customer_key
+        description: "{{ doc('customer_key') }}"
+        data_type: varchar
+        constraints:
+          - type: not_null
+        data_tests: [unique, not_null]
+      - name: customer_unique_id
+        data_type: varchar
+        data_tests: [unique, not_null]
+      - name: zip_code_prefix
+        data_type: varchar
+      - name: city
+        data_type: varchar
+      - name: state_code
+        data_type: varchar
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('br_states')
+                field: state_code
+      - name: state_name
+        data_type: varchar
+      - name: region
+        data_type: varchar
+      - name: latitude
+        data_type: double
+      - name: longitude
+        data_type: double
+      - name: first_order_at
+        data_type: timestamp
+      - name: last_order_at
+        data_type: timestamp
+      - name: lifetime_orders
+        data_type: bigint
+      - name: is_repeat_customer
+        description: True when the customer placed more than one order (only ~3% do).
+        data_type: boolean
+
+  - name: dim_sellers
+    description: One row per seller.
+    columns:
+      - name: seller_key
+        data_tests: [unique, not_null]
+      - name: seller_id
+        data_tests: [unique, not_null]
+
+  - name: dim_products
+    description: One row per product, with English category names.
+    columns:
+      - name: product_key
+        data_tests: [unique, not_null]
+      - name: product_id
+        data_tests: [unique, not_null]
+      - name: category_name_en
+        data_tests: [not_null]
+
+  - name: fct_orders
+    description: >
+      One row per order with its lifecycle, monetary values, payment summary, review and delivery metrics.
+      Monetary values in BRL.
+    config:
+      contract:
+        enforced: true
+    data_tests:
+      - dbt_utils.expression_is_true:
+          name: delivered_orders_have_delivery_date
+          arguments:
+            expression: "delivered_to_customer_at is not null"
+          config:
+            where: "order_status = 'delivered'"
+            severity: warn  # 8 known source records violate it — tracked, not blocking
+    columns:
+      - name: order_id
+        data_type: varchar
+        constraints:
+          - type: not_null
+        data_tests: [unique, not_null]
+      - name: customer_key
+        data_type: varchar
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_key
+      - name: purchase_date_key
+        data_type: integer
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: order_status
+        description: "{{ doc('order_status') }}"
+        data_type: varchar
+      - name: delivery_zip_code_prefix
+        data_type: varchar
+      - name: delivery_state_code
+        description: State of the delivery address at the time of the order.
+        data_type: varchar
+      - name: purchased_at
+        data_type: timestamp
+      - name: approved_at
+        data_type: timestamp
+      - name: delivered_to_carrier_at
+        data_type: timestamp
+      - name: delivered_to_customer_at
+        data_type: timestamp
+      - name: estimated_delivery_at
+        data_type: timestamp
+      - name: item_count
+        data_type: integer
+      - name: seller_count
+        data_type: integer
+      - name: items_value
+        description: Sum of item prices (GMV, excluding freight).
+        data_type: decimal(14, 2)
+      - name: freight_value
+        data_type: decimal(14, 2)
+      - name: order_value
+        description: items_value + freight_value.
+        data_type: decimal(14, 2)
+      - name: payment_value
+        description: Sum of payments. Can differ from order_value (installment interest, vouchers).
+        data_type: decimal(14, 2)
+      - name: payment_count
+        data_type: integer
+      - name: max_installments
+        data_type: integer
+      - name: primary_payment_type
+        data_type: varchar
+      - name: used_voucher
+        data_type: boolean
+      - name: review_score
+        data_type: integer
+      - name: is_sale
+        description: Order counts as a sale (not canceled/unavailable). Statuses configured in the `sale_statuses` var.
+        data_type: boolean
+      - name: is_delivered
+        data_type: boolean
+      - name: delivery_days
+        description: Days from purchase to delivery to the customer.
+        data_type: bigint
+      - name: estimated_delivery_days
+        data_type: bigint
+      - name: is_late
+        description: Delivered after the estimated date. NULL when not delivered.
+        data_type: boolean
+
+  - name: fct_order_items
+    description: One row per order line.
+    columns:
+      - name: order_item_key
+        data_tests: [unique, not_null]
+      - name: product_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_key
+      - name: seller_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_sellers')
+                field: seller_key
