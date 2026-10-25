@@ -1,0 +1,37 @@
+name: 17-election-night-live
+
+on:
+  push:
+    branches: [main]
+    paths: ["17-election-night-live/**", ".github/workflows/17-election-night-live.yml"]
+  pull_request:
+    paths: ["17-election-night-live/**", ".github/workflows/17-election-night-live.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 17-election-night-live
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: 17-election-night-live/requirements.txt
+
+      - run: pip install -r requirements.txt
+
+      - name: Lint
+        run: |
+          ruff check src dashboard tests
+          ruff format --check src dashboard tests
+
+      - name: Tests (fixture feed, no network)
+        run: pytest -q

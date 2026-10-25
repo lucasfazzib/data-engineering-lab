@@ -37,6 +37,7 @@ leaves exercises to implement and lists the interview questions on the topic.
 | 12 | Iceberg + Trino | table format internals, catalogs, time travel, partition evolution | 🟡 medium | todo |
 | 13 | [**Olist data warehouse (portfolio)**](13-olist-data-warehouse/) | real data, Kimball, contracts, unit tests, DQ policy, ADRs, CI, dashboard | 🟢 light | done |
 | 14 | Snowflake locally (fakesnow) + optional trial | Snowflake SQL, streams & tasks, dynamic tables, time travel, cost | 🟢 light | todo |
+| 17 | [**Election night live (near real time)**](17-election-night-live/) | polling an overwrite-in-place feed, idempotent versions, bronze/silver Parquet, live dashboard, projection | 🟢 light | done |
 
 Weight = approximate RAM: 🟢 < 1 GB · 🟡 1–3 GB · 🔴 3–5 GB · 🔴🔴 8–10 GB.
 Status: **todo** → **in progress** (runs end to end, exercises open) → **done**.

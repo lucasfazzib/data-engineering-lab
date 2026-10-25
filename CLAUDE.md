@@ -57,6 +57,7 @@ Context for resuming work on this repo in a new session.
 | 12 | Iceberg + Trino | todo |
 | 13 | Olist data warehouse (portfolio) | done — 99 tests pass + 2 documented warns, CI green locally |
 | 14 | Snowflake locally (fakesnow) + optional trial | todo |
+| 17 | Election night live (TSE feed, near real time) | done — captured the 2026 runoff count live; 9 tests, CI |
 
 Status values: todo → in progress (runs end to end, exercises open) → done.
 

@@ -1,0 +1,31 @@
+name: lab17-election-night-live
+
+# Weight: LIGHT (~400 MB RAM). Two processes from one image, sharing ./data on the host.
+
+x-app: &app
+  build: .
+  image: data-engineering-lab/17-election-night-live:local
+  user: "${LAB_UID:-1000}:${LAB_GID:-1000}"
+  working_dir: /lab
+  volumes:
+    - .:/lab
+  environment:
+    ELECTION_DATA: /lab/data
+
+services:
+  poller:
+    <<: *app
+    container_name: lab17-poller
+    command: python -m election.poller --interval ${POLL_SECONDS:-60}
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.5
+
+  dashboard:
+    <<: *app
+    container_name: lab17-dashboard
+    command: streamlit run dashboard/app.py --server.address 0.0.0.0 --server.port 8501 --server.headless true
+    ports:
+      - "127.0.0.1:8501:8501"
+    mem_limit: 512m
+    cpus: 1
