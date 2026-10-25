@@ -38,7 +38,7 @@ Context for resuming work on this repo in a new session.
 ## Environment
 - Windows 11 + WSL2 Ubuntu 26.04; repo lives at `~/projects/data-engineering-lab` (WSL filesystem, not D:).
 - WSL limited to 16 GB RAM / 6 CPUs. Docker Desktop with WSL integration — must be running.
-- GitHub remote: not created yet (needs `gh auth login` inside WSL).
+- GitHub remote: https://github.com/lucasfazzib/data-engineering-lab (public, branch `main`; `gh` authenticated inside WSL).
 
 ## Status
 | # | Example | Status |
