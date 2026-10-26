@@ -1,0 +1,181 @@
+name: lab18-invoice-streaming
+
+# Weight: MEDIUM (~3 GB RAM with everything up; Spark is half of it).
+# Optional profiles: `ui` (Mongo Express), `notebook` (JupyterLab on the Spark image).
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: app.Dockerfile
+  image: data-engineering-lab/18-invoice-app:local
+  user: "${LAB_UID:-1000}:${LAB_GID:-1000}"
+  working_dir: /lab
+  volumes:
+    - .:/lab
+  environment: &app-env
+    HOME: /tmp
+    PYTHONPATH: /lab
+    KAFKA_BOOTSTRAP: kafka:9092
+    KAGGLEHUB_CACHE: /lab/data/kaggle
+
+x-spark: &spark
+  build: ./spark
+  image: data-engineering-lab/18-invoice-spark:local
+  working_dir: /opt/lab
+  volumes:
+    - ./spark:/opt/lab
+    - checkpoints:/checkpoints
+  environment:
+    KAFKA_BOOTSTRAP: kafka:9092
+    # Spark writes with a read/write user that only exists in the `invoices` database (local-only dummy)
+    MONGO_URI: mongodb://app:app@mongo:27017/invoices?authSource=invoices
+    CHECKPOINT_DIR: /checkpoints
+    PYTHONPATH: /opt/lab/jobs
+  depends_on:
+    kafka-init:
+      condition: service_completed_successfully
+    mongo:
+      condition: service_healthy
+
+services:
+  kafka:
+    image: apache/kafka:4.3.1
+    container_name: lab18-kafka
+    environment:
+      # Single node acting as broker AND KRaft controller: no ZooKeeper since Kafka 4.0
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: INTERNAL://:9092,CONTROLLER://:9093,EXTERNAL://:29092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false" # topics are created explicitly (kafka-init)
+      KAFKA_HEAP_OPTS: -Xms384m -Xmx384m
+    ports:
+      - "127.0.0.1:29092:29092" # clients on the host: localhost:29092
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 3s
+      timeout: 10s
+      retries: 40
+    mem_limit: 768m
+
+  kafka-init:
+    image: apache/kafka:4.3.1
+    container_name: lab18-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        for t in ingestion-topic spark-output; do
+          /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic $$t --partitions 3 --replication-factor 1
+        done
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list
+    mem_limit: 256m
+
+  mongo:
+    image: mongo:8.0.32
+    container_name: lab18-mongo
+    command: ["--wiredTigerCacheSizeGB", "0.25"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root # local-only dummy credentials
+      MONGO_INITDB_ROOT_PASSWORD: root
+    volumes:
+      - mongo-data:/data/db
+      - ./mongo/init.js:/docker-entrypoint-initdb.d/init.js:ro
+    ports:
+      - "127.0.0.1:27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+    mem_limit: 512m
+
+  mongo-express:
+    profiles: ["ui"]
+    image: mongo-express:1.0.2
+    container_name: lab18-mongo-express
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://root:root@mongo:27017/ # local-only
+      ME_CONFIG_BASICAUTH: "false"
+    ports:
+      - "127.0.0.1:8081:8081"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    mem_limit: 256m
+
+  api-ingest:
+    <<: *app
+    container_name: lab18-api-ingest
+    command: uvicorn api_ingest.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "127.0.0.1:8000:8000" # Swagger UI: http://localhost:8000/docs
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    mem_limit: 256m
+
+  spark-stream:
+    <<: *spark
+    container_name: lab18-spark-stream
+    command: ["/opt/spark/bin/spark-submit", "--master", "local[2]", "--driver-memory", "1g", "jobs/stream_invoices.py"]
+    restart: unless-stopped
+    mem_limit: 1536m
+    cpus: 2
+
+  notebook:
+    <<: *spark
+    profiles: ["notebook"]
+    container_name: lab18-notebook
+    command: ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--IdentityProvider.token=", "--ServerApp.root_dir=/opt/lab/notebooks"]
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092
+      MONGO_URI: mongodb://app:app@mongo:27017/invoices?authSource=invoices
+      CHECKPOINT_DIR: /checkpoints/notebook # own checkpoints: never share them with the running job
+      PYTHONPATH: /opt/lab/jobs
+    ports:
+      - "127.0.0.1:8888:8888" # no token: bound to localhost only
+    mem_limit: 1536m
+    cpus: 2
+
+  dashboard:
+    <<: *app
+    container_name: lab18-dashboard
+    command: streamlit run dashboard/app.py --server.address 0.0.0.0 --server.port 8501 --server.headless true
+    environment:
+      <<: *app-env
+      MONGO_URI: mongodb://dashboard:dashboard@mongo:27017/invoices?authSource=invoices
+    ports:
+      - "127.0.0.1:8501:8501"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    mem_limit: 512m
+
+  tools: # one-off commands: data prep, input client, tests
+    <<: *app
+    profiles: ["tools"]
+    container_name: lab18-tools
+    environment:
+      <<: *app-env
+      API_URL: http://api-ingest:8000/invoiceitem
+    mem_limit: 512m
+
+volumes:
+  mongo-data:
+  checkpoints:

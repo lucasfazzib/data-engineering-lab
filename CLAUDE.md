@@ -58,6 +58,7 @@ Context for resuming work on this repo in a new session.
 | 13 | Olist data warehouse (portfolio) | done — 99 tests pass + 2 documented warns, CI green locally |
 | 14 | Snowflake locally (fakesnow) + optional trial | todo |
 | 17 | Election night live (TSE feed, near real time) | done — captured the 2026 runoff count live; 9 tests, CI |
+| 18 | Invoice streaming (API -> Kafka -> Spark -> MongoDB -> Streamlit) | done - verified end to end on real data, replay idempotent; 13 tests, CI |
 
 Status values: todo → in progress (runs end to end, exercises open) → done.
 

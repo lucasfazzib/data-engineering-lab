@@ -1,0 +1,20 @@
+[project]
+name = "invoice-streaming"
+version = "1.0.0"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 130
+target-version = "py312"
+extend-exclude = ["spark/notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "PL", "RUF"]
+ignore = ["PLR2004", "PLC0415"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["api_ingest", "client", "data_prep", "spark", "mongo_sink"]
+
+[tool.pytest.ini_options]
+pythonpath = [".", "spark/jobs"]
+testpaths = ["tests"]

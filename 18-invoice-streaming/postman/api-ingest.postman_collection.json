@@ -1,0 +1,42 @@
+{
+  "info": {
+    "name": "18 invoice-streaming · api-ingest",
+    "description": "Import into Postman (File > Import). Requires `make up`. Swagger UI with the same endpoints: http://localhost:8000/docs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [{ "key": "baseUrl", "value": "http://localhost:8000" }],
+  "item": [
+    {
+      "name": "Health",
+      "request": { "method": "GET", "url": "{{baseUrl}}/health" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 OK', () => pm.response.to.have.status(200));"
+      ] } }]
+    },
+    {
+      "name": "Valid invoice item -> 201",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/invoiceitem",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"InvoiceNo\": \"999001\",\n  \"StockCode\": \"85123A\",\n  \"Description\": \"WHITE HANGING HEART T-LIGHT HOLDER\",\n  \"Quantity\": 6,\n  \"InvoiceDate\": \"2011-12-09T12:50:00\",\n  \"UnitPrice\": 2.55,\n  \"CustomerID\": \"99999\",\n  \"Country\": \"United Kingdom\"\n}" }
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('201 Created', () => pm.response.to.have.status(201));",
+        "pm.test('written to ingestion-topic', () => pm.expect(pm.response.json().topic).to.eql('ingestion-topic'));"
+      ] } }]
+    },
+    {
+      "name": "Invalid item (Quantity is text) -> 422",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/invoiceitem",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"InvoiceNo\": \"999002\",\n  \"StockCode\": \"85123A\",\n  \"Quantity\": \"six\",\n  \"InvoiceDate\": \"2011-12-09T12:50:00\",\n  \"UnitPrice\": 2.55,\n  \"Country\": \"United Kingdom\"\n}" }
+      },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('422 Unprocessable', () => pm.response.to.have.status(422));"
+      ] } }]
+    }
+  ]
+}
