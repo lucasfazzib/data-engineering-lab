@@ -1,0 +1,4 @@
+# collected data, HTTP cache and the warehouse are never committed
+data/
+.venv/
+*.log

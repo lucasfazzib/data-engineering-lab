@@ -1,0 +1,19 @@
+# Which sources run, and how politely. Every source here was reviewed in docs/fontes.md.
+user_agent: "data-engineering-lab/corridas-sp (personal study project; +https://github.com/lucasfazzib/data-engineering-lab)"
+cache_ttl_hours: 20        # a page is fetched at most once a day
+min_interval_seconds: 2    # per host
+
+sources:
+  cbat:
+    enabled: true
+    sitemap: https://cbat.org.br/sitemap.xml
+    # Allow-list: only event pages. Results/athletes pages are never requested (LGPD).
+    allowed_url_pattern: '^https://cbat\.org\.br/evento/\d+/[\w-]+$'
+  minhas_inscricoes:
+    enabled: true
+    uf: SP   # the calendar is national; we keep only in-person events in this state
+
+enrichment:
+  ibge_municipalities: https://servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios
+  ibge_meshes: https://servicodados.ibge.gov.br/api/v3/malhas/estados/35?formato=application/vnd.geo%2Bjson&intrarregiao=municipio&qualidade=minima
+  # Nominatim/OSM is NOT used: its robots.txt disallows /search for all user agents.
