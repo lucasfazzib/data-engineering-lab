@@ -1,0 +1,29 @@
+version: 2
+
+# Bronze is Parquet on disk (one folder per source and collection day): dbt-duckdb reads it in place.
+# CORRIDAS_DATA points somewhere else in CI (synthetic data); locally it is ../data.
+sources:
+  - name: bronze
+    tables:
+      - name: cbat
+        meta:
+          external_location: "read_parquet('{{ env_var('CORRIDAS_DATA', '../data') }}/bronze/cbat/*/records.parquet', hive_partitioning = true)"
+      - name: minhas_inscricoes
+        meta:
+          external_location: "read_parquet('{{ env_var('CORRIDAS_DATA', '../data') }}/bronze/minhas_inscricoes/*/records.parquet', hive_partitioning = true)"
+      - name: runs
+        description: One row per collection run per source (records collected, errors).
+        meta:
+          external_location: "read_parquet('{{ env_var('CORRIDAS_DATA', '../data') }}/bronze/_runs/*.parquet')"
+        config:
+          loaded_at_field: finished_at
+          freshness:
+            warn_after: {count: 2, period: day}
+            error_after: {count: 4, period: day}
+
+  - name: reference
+    tables:
+      - name: municipalities
+        description: 645 municipalities of SP (IBGE Localidades) with centroids (IBGE Malhas).
+        meta:
+          external_location: "read_parquet('{{ env_var('CORRIDAS_DATA', '../data') }}/reference/municipalities_sp.parquet')"

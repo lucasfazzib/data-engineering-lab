@@ -1,0 +1,8 @@
+# Local DuckDB file, no credentials. CORRIDAS_DATA lets CI point to a fixture folder.
+corridas:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('CORRIDAS_DATA', '../data') }}/warehouse.duckdb"
+      threads: 4

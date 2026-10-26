@@ -1,0 +1,13 @@
+snapshots:
+  - name: snap_race_offer
+    description: >
+      SCD type 2 of what each source says about an event: price range, status, date and distances.
+      One row per version, valid between dbt_valid_from and dbt_valid_to (null = current).
+      Answers "when did the price go up?", "when did it sell out?", "was it postponed?".
+      Granularity is one snapshot per day (the collection frequency), so the history is daily.
+    relation: ref('stg_bronze__events')
+    config:
+      unique_key: record_key
+      strategy: check
+      check_cols: [price_brl, price_max_brl, status, event_date, distances_km, start_time]
+      hard_deletes: invalidate  # an event that disappears from the source gets its row closed

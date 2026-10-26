@@ -1,0 +1,149 @@
+version: 2
+
+models:
+  - name: stg_bronze__events
+    description: Latest observation of each source record (all sources, same contract).
+    columns:
+      - name: record_key
+        data_tests: [unique, not_null]
+      - name: source
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('sources')
+                field: source
+      - name: event_date
+        data_tests: [not_null]
+      - name: source_url
+        description: Always kept - credit and link back to the original.
+        data_tests: [not_null]
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [open, closed, sold_out, postponed, cancelled]
+
+  - name: stg_reference__municipalities
+    columns:
+      - name: ibge_code
+        data_tests: [unique, not_null]
+      - name: city_key
+        data_tests: [unique]
+
+  - name: int_events__normalized
+    description: SP running events, normalized and geolocated (one row per source record).
+    columns:
+      - name: record_key
+        data_tests: [unique, not_null]
+      - name: ibge_code
+        description: Null when the city name could not be matched to an IBGE municipality.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+
+  - name: int_er__candidate_pairs
+    description: Blocked candidate pairs with similarity score and decision (match / review / distinct).
+    columns:
+      - name: score
+        data_tests:
+          - not_null
+
+  - name: int_er__clusters
+    columns:
+      - name: record_key
+        data_tests: [unique, not_null]
+      - name: event_id
+        data_tests: [not_null]
+
+  - name: dim_event
+    description: One row per real-world event, resolved across sources.
+    columns:
+      - name: event_id
+        data_tests: [unique, not_null]
+      - name: event_date
+        data_tests: [not_null]
+
+  - name: dim_race
+    columns:
+      - name: race_id
+        data_tests: [unique, not_null]
+      - name: event_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_event')
+                field: event_id
+
+  - name: dim_location
+    columns:
+      - name: ibge_code
+        data_tests: [unique, not_null]
+
+  - name: bridge_event_source
+    columns:
+      - name: record_key
+        data_tests: [unique, not_null]
+      - name: event_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_event')
+                field: event_id
+
+  - name: mart_upcoming_races
+    description: Future SP events for the app (one row per event).
+    columns:
+      - name: event_id
+        data_tests: [unique, not_null]
+
+  - name: mart_source_health
+    description: Last run vs. previous runs per source, plus field fill rates (layout-break detector).
+    columns:
+      - name: health
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [ok]
+              config:
+                severity: warn  # surfaces a broken scraper in `dbt build` without blocking the other source
+
+unit_tests:
+  - name: name_normalization_removes_editions_years_and_payment_variants
+    model: int_events__normalized
+    given:
+      - input: ref('stg_bronze__events')
+        rows:
+          - {record_key: "a", source: x, name: "7ª Corrida 17 BPMI - Pix", event_date: "2026-11-08", uf: SP, city: "São José do Rio Preto", distances_km: [5.0, 10.0]}
+          - {record_key: "b", source: x, name: "7 CORRIDA 17 BPMI - Cartão", event_date: "2026-11-08", uf: SP, city: "Sao Jose do Rio Preto", distances_km: [10.0, 21.1]}
+          - {record_key: "c", source: x, name: "Desafio Virtual 10k", event_date: "2026-11-08", uf: SP, city: "Santos", distances_km: [10.0]}
+      - input: ref('stg_reference__municipalities')
+        rows:
+          - {ibge_code: "3549805", municipality: "São José do Rio Preto", city_key: "sao jose do rio preto", lat: -20.8, lon: -49.4}
+    expect:
+      rows:
+        - {record_key: "a", name_key: "bpmi", ibge_code: "3549805", distance_categories: ["10k", "5k"]}
+        - {record_key: "b", name_key: "bpmi", ibge_code: "3549805", distance_categories: ["10k", "21k"]}
+
+  - name: clusters_are_transitive
+    description: A~B and B~C put A, B and C in the same event even if A and C were never compared.
+    model: int_er__clusters
+    given:
+      - input: ref('int_events__normalized')
+        rows:
+          - {record_key: "a"}
+          - {record_key: "b"}
+          - {record_key: "c"}
+          - {record_key: "d"}
+      - input: ref('int_er__candidate_pairs')
+        rows:
+          - {left_key: "a", right_key: "b", decision: match}
+          - {left_key: "b", right_key: "c", decision: match}
+          - {left_key: "c", right_key: "d", decision: review}
+    expect:
+      rows:
+        - {record_key: "a", cluster_key: "a"}
+        - {record_key: "b", cluster_key: "a"}
+        - {record_key: "c", cluster_key: "a"}
+        - {record_key: "d", cluster_key: "d"}

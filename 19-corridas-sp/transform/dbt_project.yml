@@ -1,0 +1,40 @@
+name: corridas
+version: "1.0.0"
+profile: corridas
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  # entity resolution thresholds (see README "Entity resolution")
+  er_auto_match: 0.85
+  er_review_min: 0.60
+
+models:
+  corridas:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: table
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts
+
+seeds:
+  corridas:
+    +schema: reference
+
+snapshots:
+  corridas:
+    +schema: snapshots
+
+data_tests:
+  corridas:
+    +store_failures: true
+    +schema: audit
