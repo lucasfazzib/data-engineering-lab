@@ -59,6 +59,7 @@ Context for resuming work on this repo in a new session.
 | 14 | Snowflake locally (fakesnow) + optional trial | todo |
 | 17 | Election night live (TSE feed, near real time) | done — captured the 2026 runoff count live; 9 tests, CI |
 | 18 | Invoice streaming (API -> Kafka -> Spark -> MongoDB -> Streamlit) | done - verified end to end on real data, replay idempotent; 13 tests, CI |
+| 19 | Road races in SP (scraping + ER + SCD2) | done - 85 real upcoming SP races from 2 sources; 20 tests + 49 dbt nodes; CI |
 
 Status values: todo → in progress (runs end to end, exercises open) → done.
 

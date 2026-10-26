@@ -1,0 +1,41 @@
+name: 19-corridas-sp
+
+on:
+  push:
+    branches: [main]
+    paths: ["19-corridas-sp/**", ".github/workflows/19-corridas-sp.yml"]
+  pull_request:
+    paths: ["19-corridas-sp/**", ".github/workflows/19-corridas-sp.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 19-corridas-sp
+    env:
+      CORRIDAS_DATA: /tmp/corridas-ci
+      DBT_PROFILES_DIR: ${{ github.workspace }}/19-corridas-sp/transform
+      DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: 19-corridas-sp/requirements.txt
+      - run: pip install -r requirements.txt
+      - name: Lint
+        run: |
+          ruff check src app tests scripts
+          ruff format --check src app tests scripts
+      - name: Unit tests (saved HTML fixtures, no network)
+        run: pytest -q
+      - name: dbt build on synthetic data (twice, to exercise the snapshot)
+        run: |
+          python scripts/fixture_data.py
+          cd transform && dbt build && dbt build

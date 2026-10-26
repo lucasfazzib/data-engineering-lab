@@ -1,0 +1,31 @@
+name: lab19-corridas-sp
+
+# Weight: LIGHT (one Python container; DuckDB is a file). No credentials anywhere.
+
+x-app: &app
+  build: .
+  image: data-engineering-lab/19-corridas-sp:local
+  user: "${LAB_UID:-1000}:${LAB_GID:-1000}"
+  working_dir: /lab
+  volumes:
+    - .:/lab
+  environment:
+    HOME: /tmp
+    PYTHONPATH: /lab/src
+    CORRIDAS_DATA: /lab/data # absolute: DuckDB views store the path they were created with
+    DBT_PROFILES_DIR: /lab/transform
+    DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+  mem_limit: 1g
+
+services:
+  app:
+    <<: *app
+    container_name: lab19-app
+    profiles: ["cli"]
+
+  app-ui:
+    <<: *app
+    container_name: lab19-ui
+    command: streamlit run app/streamlit_app.py --server.address 0.0.0.0 --server.port 8501 --server.headless true
+    ports:
+      - "127.0.0.1:8501:8501"
